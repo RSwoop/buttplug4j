@@ -39,4 +39,8 @@ jobs:
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v2.4.2
         with:
-          arguments: build jacocoTestReport
+          arguments: build
+      - uses: actions/upload-artifact@v3
+        with:
+          name: Package
+          path: ./*
