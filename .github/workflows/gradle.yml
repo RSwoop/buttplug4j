@@ -39,23 +39,3 @@ jobs:
         uses: gradle/gradle-build-action@v2.4.2
         with:
           arguments: build jacocoTestReport
-
-      - name: Add coverage to PR
-        id: jacoco
-        uses: madrapps/jacoco-report@v1.3
-        with:
-          paths: ${{ github.workspace }}/client/build/reports/jacoco/test/jacocoTestReport.xml,${{ github.workspace }}/connectors/javax/wsserver/build/reports/jacoco/test/jacocoTestReport.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-        if: github.event_name == 'pull_request'
-
-      - name: Publish package
-        uses: gradle/gradle-build-action@v2.4.2
-        with:
-          arguments: publish
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MAVEN_USER: ${{ secrets.MAVEN_USER }}
-          MAVEN_PASS: ${{ secrets.MAVEN_PASS }}
-          OSSRH_GPG: ${{ secrets.OSSRH_GPG }}
-          OSSRH_GPG_PASS: ${{ secrets.OSSRH_GPG_PASS }}
-        if: (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tag')) && github.event_name != 'pull_request'
