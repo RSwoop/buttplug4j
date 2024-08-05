@@ -37,8 +37,7 @@ public abstract class ButtplugClientWSEndpoint extends ButtplugClient {
             onMessage(msgs);
         } catch (ButtplugProtocolException e) {
             if (getErrorReceived() != null) {
-                getErrorReceived().errorReceived(new Error(e.getMessage(),
-                        Error.ErrorClass.ERROR_UNKNOWN, ButtplugConsts.SYSTEM_MSG_ID));
+                getErrorReceived().errorReceived(new Error(e));
             } else {
                 e.printStackTrace();
             }
@@ -81,8 +80,9 @@ public abstract class ButtplugClientWSEndpoint extends ButtplugClient {
     @OnError
     public final void onWebSocketError(final Throwable cause) {
         if (getErrorReceived() != null) {
-            getErrorReceived().errorReceived(new Error(cause.getMessage(), Error.ErrorClass.ERROR_UNKNOWN,
-                    ButtplugConsts.SYSTEM_MSG_ID));
+            getErrorReceived().errorReceived(new Error(cause));
+        } else {
+            cause.printStackTrace();
         }
         disconnect();
     }
@@ -91,15 +91,22 @@ public abstract class ButtplugClientWSEndpoint extends ButtplugClient {
     protected final CompletableFuture<ButtplugMessage> sendMessage(final ButtplugMessage msg) {
         CompletableFuture<ButtplugMessage> promise = scheduleWait(msg.getId(), new CompletableFuture<>());
         if (session == null) {
-            return CompletableFuture.completedFuture(new Error("Bad WS state!",
-                    Error.ErrorClass.ERROR_UNKNOWN, ButtplugConsts.SYSTEM_MSG_ID));
+            Error err = new Error("Bad WS state!",
+                    Error.ErrorClass.ERROR_UNKNOWN, ButtplugConsts.SYSTEM_MSG_ID);
+            if( getErrorReceived() != null) {
+                getErrorReceived().errorReceived(err);
+            }
+            return CompletableFuture.completedFuture(err);
         }
 
         try {
             session.getAsyncRemote().sendText(getParser().formatJson(msg)).get();
         } catch (Exception e) {
-            return CompletableFuture.completedFuture(new Error(e.getMessage(),
-                    Error.ErrorClass.ERROR_UNKNOWN, msg.getId()));
+            Error err = new Error(e, msg.getId());
+            if( getErrorReceived() != null) {
+                getErrorReceived().errorReceived(err);
+            }
+            return CompletableFuture.completedFuture(err);
         }
         return promise;
     }
